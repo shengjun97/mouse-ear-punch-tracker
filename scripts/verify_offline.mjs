@@ -3,6 +3,8 @@
 //
 //   node scripts/verify_offline.mjs online  <profileDir> [url]   # server running
 //   node scripts/verify_offline.mjs offline <profileDir> [url]   # server stopped
+//   node scripts/verify_offline.mjs live    <profileDir> <url>   # deployed site:
+//        "online" steps, then cuts this browser's network and reloads
 //
 // "online" loads the app, waits for the service worker, creates a test
 // experiment, and reloads. "offline" must be run after the server is stopped:
@@ -13,8 +15,8 @@ import { writeFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const [phase, profile, url = 'http://localhost:4173/'] = process.argv.slice(2);
-if (!['online', 'offline'].includes(phase) || !profile) {
-  console.error('usage: node scripts/verify_offline.mjs online|offline <profileDir> [url]');
+if (!['online', 'offline', 'live'].includes(phase) || !profile) {
+  console.error('usage: node scripts/verify_offline.mjs online|offline|live <profileDir> [url]');
   process.exit(2);
 }
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -92,7 +94,7 @@ try {
   await send('Page.navigate', { url });
   await sleep(3000);
 
-  if (phase === 'online') {
+  if (phase === 'online' || phase === 'live') {
     result.firstLoad = await status();
     // Create an experiment through the UI form (React-controlled input).
     await evaluate(`(async () => {
@@ -108,6 +110,25 @@ try {
     await send('Page.reload');
     await sleep(2500);
     result.afterReload = await status();
+    if (phase === 'live') {
+      await send('Network.enable');
+      await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+      result.networkCheck = await evaluate(
+        `fetch('https://example.com/', { cache: 'no-store' }).then(() => 'network reachable', () => 'network blocked')`,
+      );
+      await send('Page.reload');
+      await sleep(2500);
+      result.offlineReload = await status();
+      await evaluate(`location.hash = '#/templates'`);
+      await sleep(800);
+      result.templatesPage = await evaluate(`document.querySelector('main h2')?.textContent ?? null`);
+      await evaluate(`location.hash = '#/'`);
+      await sleep(500);
+      const shot = await send('Page.captureScreenshot', { format: 'png' });
+      const file = `${profile}/live-offline.png`;
+      writeFileSync(file, Buffer.from(shot.data, 'base64'));
+      result.screenshot = file;
+    }
   } else {
     result.serverReachable = await fetch(url).then(
       () => true,

@@ -4,6 +4,8 @@ Local-first web app for recording and looking up mouse ear punch patterns.
 No backend; all data stays on the device (IndexedDB). Installable, and works
 fully offline once opened. Built with React, TypeScript, and Vite.
 
+**Live app:** https://shengjun97.github.io/mouse-ear-punch-tracker/
+
 ## Run on this computer
 
 Node.js is installed per-user at `~/.local/node` (no system changes).
@@ -16,7 +18,16 @@ npm run build    # production build in dist/
 npm run preview  # serve the production build at http://localhost:4173
 ```
 
-## Deploy (for tablets and phones)
+## Publish an update
+
+The site is on GitHub Pages. Every push to `main` runs the tests, builds, and
+redeploys automatically (`.github/workflows/deploy.yml`):
+
+```bash
+git add -A && git commit -m "Describe the change" && git push
+```
+
+## Deploy elsewhere (optional)
 
 `dist/` is a plain static site. Copy it to any static web host that serves
 **HTTPS** (for example GitHub Pages, Netlify, or a lab/university web server).
@@ -60,6 +71,8 @@ the nose) to 1 = bottom (posterior). The left ear is mirrored when drawn.
 - `scripts/verify_offline.mjs` checks the production build offline in a separate
   headless Chrome with a temporary profile: run `online` with `npm run preview`
   running, stop the server, then run `offline` with the same profile folder.
+  For the deployed site, `live <profileDir> <url>` loads it, then cuts the
+  browser's network and reloads.
 
 ## Status
 

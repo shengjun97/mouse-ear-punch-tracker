@@ -57,6 +57,8 @@
   - Offline verified with a separate headless Chrome and temporary profile: app and saved data load with the server stopped.
     The Claude desktop browser pane refuses to register service workers, so it can't be used for this check.
 
+- Hosting (2026-11-23): GitHub Pages from the public repo shengjun97/mouse-ear-punch-tracker, built by a GitHub Actions workflow on every push to main (user choice). Commits use the GitHub noreply email. Verified live: installs the service worker and works with the network cut.
+
 ## Numbering scheme sources (for built-in templates, stage 6)
 
 - JAX Green Book, chapter 3, Figure 3-2 (dorsal view): right ear units, left ear tens.
